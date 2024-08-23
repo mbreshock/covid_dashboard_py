@@ -20,6 +20,8 @@ last_row = world_data.iloc[-1]
 last_update = f"Last Update: {last_row['date']}"
 
 # Create plots
+# TODO: Python shiny currently does not handly plotly
+# convert to static plots instead
 def create_country_graphs(dtype):
     if dtype == 1:
         y_col = 'total_cases'
@@ -61,19 +63,17 @@ def create_world_graphs(dtype):
 # UI layout
 app_ui = ui.page_fluid(
     ui.layout_sidebar(
-        ui.panel_sidebar(
+        ui.sidebar(
             ui.input_radio_buttons('dtype', 'Type:', 
                                    choices={'Total Cases': 1, 'New Cases': 2, 'Total Deaths': 3, 'New Deaths': 4}),
             ui.output_text('interact'),
             ui.output_text('update'),
             ui.output_text('disclaimer')
         ),
-        ui.panel_main(
-            ui.h2("Country Data"),
-            ui.output_plot('plot1'),
-            ui.h2("World Data"),
-            ui.output_plot('plot2')
-        )
+        ui.h2("Country Data"),
+        ui.output_plot('plot1'),
+        ui.h2("World Data"),
+        ui.output_plot('plot2')
     )
 )
 
