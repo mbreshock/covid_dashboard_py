@@ -1,10 +1,18 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from shiny import App, ui, render, reactive
 
 # Load data
 covid_data = pd.read_csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv")
+
+# get date of the last update
+last_row = covid_data.iloc[-1]
+last_update = f"Last Update: {last_row['date']}"
+
+# refactor date column
+covid_data['date'] = pd.to_datetime(covid_data['date'])
 
 # Filter and select data
 countries = ["United States", "United Kingdom", "India", "Japan", "China", 
@@ -16,20 +24,15 @@ count_data = count_data[['location', 'date', 'total_cases', 'new_cases', 'total_
 world_data = covid_data[covid_data['location'] == "World"]
 world_data = world_data[['location', 'date', 'total_cases', 'new_cases', 'total_deaths', 'new_deaths']]
 
-last_row = world_data.iloc[-1]
-last_update = f"Last Update: {last_row['date']}"
-
 # Create plots
-# TODO: Python shiny currently does not handle plotly
-# convert to static plots instead
 def create_country_graphs(dtype):
-    if dtype == 1:
+    if dtype == 'Total Cases':
         y_col = 'total_cases'
         title = 'Number of Total Cases Over Time per Country'
-    elif dtype == 2:
+    elif dtype == 'New Cases':
         y_col = 'new_cases'
         title = 'Number of New Cases Over Time per Country'
-    elif dtype == 3:
+    elif dtype == 'Total Deaths':
         y_col = 'total_deaths'
         title = 'Number of Total Deaths Over Time per Country'
     else:
@@ -44,7 +47,12 @@ def create_country_graphs(dtype):
 
     # Set the title and labels
     ax.set_title(title)
-    ax.set_ylabel('')  # Hide the y-axis label
+    ax.set_ylabel(dtype) 
+
+     # Format the x-axis ticks
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
+    plt.gcf().autofmt_xdate()
 
     # Format the y-axis ticks to include commas
     ax.get_yaxis().set_major_formatter(plt.FuncFormatter(lambda x, loc: f'{int(x):,}'))
@@ -54,13 +62,13 @@ def create_country_graphs(dtype):
     return fig
 
 def create_world_graphs(dtype):
-    if dtype == 1:
+    if dtype == 'Total Cases':
         y_col = 'total_cases'
         title = 'Number of Total Cases in the World Over Time'
-    elif dtype == 2:
+    elif dtype == 'New Cases':
         y_col = 'new_cases'
         title = 'Number of New Cases in the World Over Time'
-    elif dtype == 3:
+    elif dtype == 'Total Deaths':
         y_col = 'total_deaths'
         title = 'Number of Total Deaths in the World Over Time'
     else:
@@ -75,7 +83,12 @@ def create_world_graphs(dtype):
 
     # Set the title and labels
     ax.set_title(title)
-    ax.set_ylabel('')  # Hide the y-axis label
+    ax.set_ylabel(dtype) 
+
+    # Format the x-axis ticks
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
+    plt.gcf().autofmt_xdate()
 
     # Format the y-axis ticks to include commas
     ax.get_yaxis().set_major_formatter(plt.FuncFormatter(lambda x, loc: f'{int(x):,}'))
@@ -89,8 +102,7 @@ app_ui = ui.page_fluid(
     ui.layout_sidebar(
         ui.sidebar(
             ui.input_radio_buttons('dtype', 'Type:', 
-                                   choices={'Total Cases': 1, 'New Cases': 2, 'Total Deaths': 3, 'New Deaths': 4}),
-            ui.output_text('interact'),
+                                   choices={1:'Total Cases', 2:'New Cases', 3:'Total Deaths', 4:'New Deaths'}),
             ui.output_text('update'),
             ui.output_text('disclaimer')
         ),
@@ -103,10 +115,6 @@ app_ui = ui.page_fluid(
 
 # Server logic
 def server(input, output, session):
-    @output
-    @render.text
-    def interact():
-        return 'The plots are interactive. You can use the tools at the top right of the figure to manipulate the graphs! :)'
 
     @output
     @render.text
