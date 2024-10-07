@@ -1,6 +1,6 @@
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
+import seaborn as sns
+import matplotlib.pyplot as plt
 from shiny import App, ui, render, reactive
 
 # Load data
@@ -20,7 +20,7 @@ last_row = world_data.iloc[-1]
 last_update = f"Last Update: {last_row['date']}"
 
 # Create plots
-# TODO: Python shiny currently does not handly plotly
+# TODO: Python shiny currently does not handle plotly
 # convert to static plots instead
 def create_country_graphs(dtype):
     if dtype == 1:
@@ -36,10 +36,21 @@ def create_country_graphs(dtype):
         y_col = 'new_deaths'
         title = 'Number of New Deaths Over Time per Country'
 
-    fig = px.line(count_data, x='date', y=y_col, color='location', facet_col='location', facet_col_wrap=5,
-                  title=title, labels={y_col: ''})
-    fig.update_yaxes(tickformat=",")
-    fig.update_layout(showlegend=False)
+    # Create the Figure and Axes objects
+    fig, ax = plt.subplots(figsize=(10, 6))  # Create figure and axes
+
+    # Create the Seaborn line plot on the Axes object
+    sns.lineplot(data=count_data, x='date', y=y_col, hue='location', ax=ax)
+
+    # Set the title and labels
+    ax.set_title(title)
+    ax.set_ylabel('')  # Hide the y-axis label
+
+    # Format the y-axis ticks to include commas
+    ax.get_yaxis().set_major_formatter(plt.FuncFormatter(lambda x, loc: f'{int(x):,}'))
+
+    # Hide the legend
+    # ax.legend([],[], frameon=False)
     return fig
 
 def create_world_graphs(dtype):
