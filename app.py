@@ -119,9 +119,9 @@ app_ui = ui.page_fluid(
             ui.output_text('update'),
             ui.output_ui("author")
         ),
-        ui.h2("Country Data"),
+        ui.h2("Countries"),
         ui.output_plot('plot1'),
-        ui.h2("World Data"),
+        ui.h2("Global"),
         ui.output_plot('plot2')
     )
 )
