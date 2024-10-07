@@ -5,7 +5,7 @@ import matplotlib.dates as mdates
 from shiny import App, ui, render, reactive
 
 # Load data
-covid_data = pd.read_csv("https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/owid-covid-data.csv")
+covid_data = pd.read_csv("https://catalog.ourworldindata.org/garden/covid/latest/compact/compact.csv")
 
 # get date of the last update
 last_row = covid_data.iloc[-1]
@@ -18,36 +18,40 @@ covid_data['date'] = pd.to_datetime(covid_data['date'])
 countries = ["United States", "United Kingdom", "India", "Japan", "China", 
              "Brazil", "Germany", "Canada", "Mexico", "Italy"]
 
-count_data = covid_data[covid_data['location'].isin(countries)]
-count_data = count_data[['location', 'date', 'total_cases', 'new_cases', 'total_deaths', 'new_deaths']]
+count_data = covid_data[covid_data['country'].isin(countries)]
+count_data = count_data[['country', 'date', 'total_cases', 'new_cases', 'total_deaths', 'new_deaths']]
 
-world_data = covid_data[covid_data['location'] == "World"]
-world_data = world_data[['location', 'date', 'total_cases', 'new_cases', 'total_deaths', 'new_deaths']]
+world_data = covid_data[covid_data['country'] == "World"]
+world_data = world_data[['country', 'date', 'total_cases', 'new_cases', 'total_deaths', 'new_deaths']]
 
 # Create plots
 def create_country_graphs(dtype):
-    if dtype == 'Total Cases':
+    if dtype == '1':
         y_col = 'total_cases'
         title = 'Number of Total Cases Over Time per Country'
-    elif dtype == 'New Cases':
+        y_lab = 'Cases (Total)'
+    elif dtype == '2':
         y_col = 'new_cases'
         title = 'Number of New Cases Over Time per Country'
-    elif dtype == 'Total Deaths':
+        y_lab = 'Cases (New)'
+    elif dtype == '3':
         y_col = 'total_deaths'
         title = 'Number of Total Deaths Over Time per Country'
+        y_lab = 'Deaths (Total)'
     else:
         y_col = 'new_deaths'
         title = 'Number of New Deaths Over Time per Country'
+        y_lab = 'Deaths (New)'
 
     # Create the Figure and Axes objects
     fig, ax = plt.subplots(figsize=(10, 6))  # Create figure and axes
 
     # Create the Seaborn line plot on the Axes object
-    sns.lineplot(data=count_data, x='date', y=y_col, hue='location', ax=ax)
+    sns.lineplot(data=count_data, x='date', y=y_col, hue='country', ax=ax)
 
     # Set the title and labels
     ax.set_title(title)
-    ax.set_ylabel(dtype) 
+    ax.set_ylabel(y_lab) 
 
      # Format the x-axis ticks
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
@@ -62,18 +66,22 @@ def create_country_graphs(dtype):
     return fig
 
 def create_world_graphs(dtype):
-    if dtype == 'Total Cases':
+    if dtype == '1':
         y_col = 'total_cases'
         title = 'Number of Total Cases in the World Over Time'
-    elif dtype == 'New Cases':
+        y_lab = 'Cases (Total)'
+    elif dtype == '2':
         y_col = 'new_cases'
         title = 'Number of New Cases in the World Over Time'
-    elif dtype == 'Total Deaths':
+        y_lab = 'Cases (New)'
+    elif dtype == '3':
         y_col = 'total_deaths'
         title = 'Number of Total Deaths in the World Over Time'
+        y_lab = 'Deaths (Total)'
     else:
         y_col = 'new_deaths'
         title = 'Number of New Deaths in the World Over Time'
+        y_lab = 'Deaths (New)'
 
     # Create the Figure and Axes objects
     fig, ax = plt.subplots(figsize=(10, 6))  # Create figure and axes
@@ -83,7 +91,7 @@ def create_world_graphs(dtype):
 
     # Set the title and labels
     ax.set_title(title)
-    ax.set_ylabel(dtype) 
+    ax.set_ylabel(y_lab) 
 
     # Format the x-axis ticks
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
@@ -101,10 +109,13 @@ def create_world_graphs(dtype):
 app_ui = ui.page_fluid(
     ui.layout_sidebar(
         ui.sidebar(
-            ui.input_radio_buttons('dtype', 'Type:', 
+            ui.h1("COVID-19 Dashboard"),
+            ui.input_radio_buttons('dtype', 'Metric', 
                                    choices={1:'Total Cases', 2:'New Cases', 3:'Total Deaths', 4:'New Deaths'}),
+            ui.output_text('disclaimer'), 
+            ui.output_ui("source"),
             ui.output_text('update'),
-            ui.output_text('disclaimer')
+            ui.output_ui("author")
         ),
         ui.h2("Country Data"),
         ui.output_plot('plot1'),
@@ -124,8 +135,24 @@ def server(input, output, session):
     @output
     @render.text
     def disclaimer():
-        return ('This dashboard was made as a practice exercise for learning Python shiny. This is not official health '
+        return ('This dashboard was made as a practice exercise for learning Shiny for Python. This is not official health '
                 'information and should not be used as such.')
+    
+    @reactive.calc
+    def source_url():
+        return ui.tags.a("Our World in Data", href='https://docs.owid.io/projects/etl/api/covid/', target='_blank')
+    
+    @render.ui
+    def source(): 
+        return ui.div("Data comes from: ", source_url())
+    
+    @reactive.calc
+    def author_url():
+        return ui.tags.a("Michael Breshock", href='https://mbreshock.github.io/index.html', target='_blank')
+    
+    @render.ui
+    def author(): 
+        return ui.div("Created by ", author_url())
 
     @output
     @render.plot
