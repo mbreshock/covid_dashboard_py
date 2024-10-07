@@ -67,8 +67,21 @@ def create_world_graphs(dtype):
         y_col = 'new_deaths'
         title = 'Number of New Deaths in the World Over Time'
 
-    fig = px.line(world_data, x='date', y=y_col, title=title, labels={y_col: ''})
-    fig.update_yaxes(tickformat=",")
+    # Create the Figure and Axes objects
+    fig, ax = plt.subplots(figsize=(10, 6))  # Create figure and axes
+
+    # Create the Seaborn line plot on the Axes object
+    sns.lineplot(data=world_data, x='date', y=y_col, ax=ax)
+
+    # Set the title and labels
+    ax.set_title(title)
+    ax.set_ylabel('')  # Hide the y-axis label
+
+    # Format the y-axis ticks to include commas
+    ax.get_yaxis().set_major_formatter(plt.FuncFormatter(lambda x, loc: f'{int(x):,}'))
+
+    # Hide the legend
+    # ax.legend([],[], frameon=False)
     return fig
 
 # UI layout
