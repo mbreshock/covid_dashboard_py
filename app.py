@@ -51,6 +51,7 @@ def create_country_graphs(dtype):
 
     # Set the title and labels
     ax.set_title(title)
+    ax.set_xlabel('Year')
     ax.set_ylabel(y_lab) 
 
      # Format the x-axis ticks
@@ -91,6 +92,7 @@ def create_world_graphs(dtype):
 
     # Set the title and labels
     ax.set_title(title)
+    ax.set_xlabel('Year')
     ax.set_ylabel(y_lab) 
 
     # Format the x-axis ticks
